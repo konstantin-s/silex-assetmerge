@@ -1,0 +1,8 @@
+{
+    "name": "konstantin-s/silex-assetmerge",
+    "description": "Merging list of JS or CSS files to one.  Merged file is cached to disk. Twig required.",
+    "require": {
+		"silex/silex": "~1.3",
+		"symfony/twig-bridge": "2.7.*"
+    }
+}
