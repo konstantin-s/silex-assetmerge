@@ -18,6 +18,15 @@ class Merger {
         $this->config = $app['assetmerge_config'];
     }
 
+    /**
+     * <pre>
+     * If inactive outputs self::getScriptsRaw(),
+     * else creates merged files(if needed) and outputs self::getScriptsMerged(),
+     * </pre>
+     * @return string output of:
+     * @see self::getScriptsRaw()
+     * @see self::getScriptsMerged()
+     */
     public function getScripts() {
 
         $headCode = "";
@@ -42,6 +51,10 @@ class Merger {
         return $headCode;
     }
 
+    /**
+     * Simple output of css&js files defined in config
+     * @return string HTML code (link and script tags) with links to unmerged original files
+     */
     public function getScriptsRaw() {
         $headCode = "";
         foreach ($this->config->getCssFiles() as $css_file) {
@@ -53,6 +66,12 @@ class Merger {
         return $headCode;
     }
 
+    /**
+     * <pre>
+     * </pre>
+     * @return string HTML code (link and script tags) with links to local MERGED files (and to remote, if FetchRemote off)
+     * @throws InvalidArgumentException If can`t find merged files
+     */
     public function getScriptsMerged() {
         $headCode = "";
         if (!$this->isMergedFilesExists()) {
