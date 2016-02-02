@@ -11,40 +11,36 @@ class Config {
     protected $app;
     protected $cssFiles;
     protected $jsFiles;
-    protected $active = true;
-    protected $fetchRemote = true;
-    protected $alwaysReMerge = false;
-//    protected $mergedCssFilePath = "/assets/merged/styles.css";
-//    protected $mergedJsFilePath = "/assets/merged/js.js";
-    protected $mergedCssRootDir = "/assets/merged/";
-    protected $mergedJsRootDir = "/assets/merged/";
+    protected $active;
+    protected $fetchRemote;
+    protected $alwaysReMerge;
+    protected $mergedCssRootDir;
+    protected $mergedJsRootDir;
     protected $mergedCssFileName = "styles.css";
     protected $mergedJsFileName = "js.js";
     protected $webRoot;
 
     function __construct(Application $app) {
         $this->app = $app;
-        if (!isset($app["assetmerge.config"])) {
-            return;
-        }
-        $webRoot = isset($app["assetmerge.config"]["webRoot"]) ? $app["assetmerge.config"]["webRoot"] : $this->app["request"]->server->get("CONTEXT_DOCUMENT_ROOT");
-        $this->setWebRoot($webRoot);
+        $config = array(
+            "active" => true,
+            "alwaysReMerge" => false,
+            "fetchRemote" => true,
+            "mergedCssRootDir" => "/assets/merged/",
+            "mergedJsRootDir" => "/assets/merged/",
+            "webRoot" => $this->app["request"]->server->get("CONTEXT_DOCUMENT_ROOT")
+        );
 
-        if (isset($app["assetmerge.config"]["active"])) {
-            $this->setActive($app["assetmerge.config"]["active"]);
+        if (isset($app["assetmerge.config"]) && !empty($app["assetmerge.config"])) {
+            $config = array_merge($config, $app["assetmerge.config"]);
         }
-        if (isset($app["assetmerge.config"]["fetchRemote"])) {
-            $this->setfetchRemote($app["assetmerge.config"]["fetchRemote"]);
-        }
-        if (isset($app["assetmerge.config"]["alwaysReMerge"])) {
-            $this->setalwaysReMerge($app["assetmerge.config"]["alwaysReMerge"]);
-        }
-        if (isset($app["assetmerge.config"]["mergedCssFilePath"])) {
-            $this->setMergedCssFilePath($app["assetmerge.config"]["mergedCssFilePath"]);
-        }
-        if (isset($app["assetmerge.config"]["mergedJsFilePath"])) {
-            $this->setMergedJsFilePath($app["assetmerge.config"]["mergedJsFilePath"]);
-        }
+
+        $this->setWebRoot($config["webRoot"]);
+        $this->setActive($config["active"]);
+        $this->setalwaysReMerge($config["alwaysReMerge"]);
+        $this->setfetchRemote($config["fetchRemote"]);
+        $this->setMergedCssRootDir($config["mergedCssRootDir"]);
+        $this->setMergedJsRootDir($config["mergedJsRootDir"]);
     }
 
     public function getWebRoot() {
@@ -54,36 +50,6 @@ class Config {
     public function setWebRoot($webRoot) {
         $this->webRoot = $webRoot;
     }
-
-//    public function getMergedCssFilePath($mode = false) {
-//        if ($mode == 'full') {
-//            return $this->getWebRoot() . $this->mergedCssFilePath;
-//        }
-//        return $this->mergedCssFilePath;
-//    }
-//
-//    public function getMergedJsFilePath($mode = false) {
-//        if ($mode == 'full') {
-//            return $this->getWebRoot() . $this->mergedJsFilePath;
-//        }
-//        return $this->mergedJsFilePath;
-//    }
-//
-//    public function setMergedCssFilePath($mergedCssFilePath) {
-//        $path2check = $this->getWebRoot() . dirname($mergedCssFilePath);
-//        if (!file_exists($path2check)) {
-//            throw new InvalidArgumentException(__METHOD__ . " failed: path not found: {$path2check}");
-//        }
-//        $this->mergedCssFilePath = $mergedCssFilePath;
-//    }
-//
-//    public function setMergedJsFilePath($mergedJsFilePath) {
-//        $path2check = $this->getWebRoot() . dirname($mergedJsFilePath);
-//        if (!file_exists($path2check)) {
-//            throw new InvalidArgumentException(__METHOD__ . " failed: path not found: {$path2check}");
-//        }
-//        $this->mergedJsFilePath = $mergedJsFilePath;
-//    }
 
     public function getMergedCssRootDir($mode = false) {
         if ($mode == 'full') {
@@ -144,6 +110,11 @@ class Config {
     }
 
     public function setCssFiles(array $cssFiles) {
+        foreach ($cssFiles as $css_file) {
+            if (!file_exists($this->getWebRoot() . $css_file)) {
+                throw new InvalidArgumentException(__METHOD__ . " {$css_file} not found");
+            }
+        }
         $this->cssFiles = $cssFiles;
     }
 
@@ -170,6 +141,16 @@ class Config {
     }
 
     public function setJsFiles(array $jsFiles) {
+        foreach ($jsFiles as $js_file) {
+
+            if (filter_var($js_file, FILTER_VALIDATE_URL) && pathinfo($js_file, PATHINFO_EXTENSION) == "js") {
+                continue;
+            }
+
+            if (!file_exists($this->getWebRoot() . $js_file)) {
+                throw new InvalidArgumentException(__METHOD__ . " {$js_file} not found");
+            }
+        }
         $this->jsFiles = $jsFiles;
     }
 

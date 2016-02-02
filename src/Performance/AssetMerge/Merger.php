@@ -5,6 +5,9 @@ namespace Performance\AssetMerge;
 use Silex\Application;
 use \InvalidArgumentException;
 
+/**
+ * Merges JS and CSS files to single file, cache it, returns HTML code with merged files
+ */
 class Merger {
 
     /** @var  Application */
@@ -86,9 +89,11 @@ class Merger {
     private function createMergedCssRules() {
         $merged_css = "";
         foreach ($this->config->getCssFiles() as $css_file) {
-            if (file_exists($this->config->getWebRoot() . $css_file)) {
-                $merged_css .= "\n/*file:{$css_file}*/\n" . file_get_contents($this->config->getWebRoot() . $css_file);
+            $fileContents = file_get_contents($this->config->getWebRoot() . $css_file);
+            if ($fileContents === false) {
+                throw new InvalidArgumentException(__METHOD__ . " failed: cannot read {$css_file} ");
             }
+            $merged_css .= "\n/*file:{$css_file}*/\n" . $fileContents;
         }
         return $merged_css;
     }
@@ -108,11 +113,16 @@ class Merger {
     private function createMergedJsCode() {
         $merged_js = "";
         foreach ($this->config->getJsFiles() as $js_file) {
-            if (file_exists($this->config->getWebRoot() . $js_file)) {
-                $merged_js .= "\n//file:{$js_file}\n" . file_get_contents($this->config->getWebRoot() . $js_file);
-            } elseif (filter_var($js_file, FILTER_VALIDATE_URL) && pathinfo($js_file, PATHINFO_EXTENSION) == "js" && $this->config->getFetchRemote() == true) {
-                $merged_js .= "\n//file:{$js_file}\n" . file_get_contents($js_file);
+
+            if (filter_var($js_file, FILTER_VALIDATE_URL) && pathinfo($js_file, PATHINFO_EXTENSION) == "js" && $this->config->getFetchRemote() == true) {
+                $fileContents = file_get_contents($js_file);
+            } else {
+                $fileContents = file_get_contents($this->config->getWebRoot() . $js_file);
             }
+            if ($fileContents === false) {
+                throw new InvalidArgumentException(__METHOD__ . " failed: cannot read {$js_file} ");
+            }
+            $merged_js .= "\n//file:{$js_file}\n" . $fileContents;
         }
         return $merged_js;
     }
