@@ -21,6 +21,15 @@ class Merger {
         $this->config = $app['assetmerge_config'];
     }
 
+    /**
+     * <pre>
+     * If inactive outputs self::getScriptsRaw(),
+     * else creates merged files(if needed) and outputs self::getScriptsMerged(),
+     * </pre>
+     * @return string output of:
+     * @see self::getScriptsRaw()
+     * @see self::getScriptsMerged()
+     */
     public function getScripts() {
 
         $headCode = "";
@@ -45,6 +54,10 @@ class Merger {
         return $headCode;
     }
 
+    /**
+     * Simple output of css&js files defined in config
+     * @return string HTML code (link and script tags) with links to unmerged original files
+     */
     public function getScriptsRaw() {
         $headCode = "";
         foreach ($this->config->getCssFiles() as $css_file) {
@@ -56,6 +69,12 @@ class Merger {
         return $headCode;
     }
 
+    /**
+     * <pre>
+     * </pre>
+     * @return string HTML code (link and script tags) with links to local MERGED files (and to remote, if FetchRemote off)
+     * @throws InvalidArgumentException If can`t find merged files
+     */
     public function getScriptsMerged() {
         $headCode = "";
         if (!$this->isMergedFilesExists()) {
@@ -106,7 +125,10 @@ class Merger {
         if (!file_exists($dir)) {
             mkdir($dir);
         }
-        file_put_contents($this->getMergedCssFilePath('full'), $MergedCssRules);
+        $result = file_put_contents($this->getMergedCssFilePath('full'), $MergedCssRules);
+        if ($result === false) {
+            throw new InvalidArgumentException(__METHOD__ . " failed: file not saved");
+        }
         return true;
     }
 
@@ -127,6 +149,13 @@ class Merger {
         return $merged_js;
     }
 
+    /**
+     * Saves merged JS code to file. File stored in subdirectory, placed in merged files root dir which defined by configuration.
+     * Subdirectory will be automatically created with name = hash of concatenated JS filenames.
+     * @param string $MergedJsCode String with merged JS code/
+     * @return boolean
+     * @throws InvalidArgumentException
+     */
     private function saveMergedJsCode($MergedJsCode) {
         if (strlen($MergedJsCode) <= 0) {
             throw new InvalidArgumentException(__METHOD__ . " failed: empty code");
@@ -135,7 +164,10 @@ class Merger {
         if (!file_exists($dir)) {
             mkdir($dir);
         }
-        file_put_contents($this->getMergedJsFilePath('full'), $MergedJsCode);
+        $result = file_put_contents($this->getMergedJsFilePath('full'), $MergedJsCode);
+        if ($result === false) {
+            throw new InvalidArgumentException(__METHOD__ . " failed: file not saved");
+        }
         return true;
     }
 
