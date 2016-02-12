@@ -4,6 +4,8 @@ namespace Performance\AssetMerge;
 
 use Silex\Application;
 use \InvalidArgumentException;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Filesystem\Exception\IOExceptionInterface;
 
 /**
  * Merges JS and CSS files to single file, cache it, returns HTML code with merged files
@@ -19,6 +21,9 @@ class Merger {
     function __construct(Application $app) {
         $this->app = $app;
         $this->config = $app['assetmerge_config'];
+        if ($this->config->getFlushMerged()) {
+            $this->flushMerged();
+        }
     }
 
     /**
@@ -93,6 +98,36 @@ class Merger {
 
         $headCode .= '<script src="' . $this->getMergedJsFilePath() . '" type="text/javascript"></script>';
         return $headCode;
+    }
+
+    /**
+     * Delete all dirs, containing merged JS and CSS files, in configured CssRootDir and JsRootDir
+     */
+    public function flushMerged() {
+        $fs = new Filesystem();
+
+        $cssMergedDirs = $this->getDirsToFlush($this->config->getMergedCssRootDir(true));
+        $fs->remove($cssMergedDirs);
+
+        $jsMergedDirs = $this->getDirsToFlush($this->config->getMergedJsRootDir(true));
+        $fs->remove($jsMergedDirs);
+    }
+
+    /**
+     * Gets all subdirs of dir in parameter except "dot" dirs and "fonts" named dir
+     * @param string $dirToIterate Root dir which content will be removed
+     * @return array
+     */
+    private function getDirsToFlush($dirToIterate) {
+        $toDeleteDirs = array();
+        $dir = new \DirectoryIterator($dirToIterate);
+        foreach ($dir as $fileinfo) {
+            if (!$fileinfo->isDir() || $fileinfo->isDot() || $fileinfo->getFilename() == "fonts") {
+                continue;
+            }
+            $toDeleteDirs[] = $fileinfo->getPathname();
+        }
+        return $toDeleteDirs;
     }
 
     private function filterCssRules($rules) {
@@ -175,10 +210,20 @@ class Merger {
         return file_exists($this->getMergedCssFilePath('full')) && file_exists($this->getMergedJsFilePath('full'));
     }
 
+    /**
+     * Returns path to file with merged CSS scripts
+     * @param bool $mode If true returns  path with webRoot config param( by default webRoot: $this->app["request"]->server->get("CONTEXT_DOCUMENT_ROOT")
+     * @return type
+     */
     private function getMergedCssFilePath($mode = false) {
         return $this->config->getMergedCssRootDir($mode) . $this->config->getCssFilesHash() . "/" . $this->config->getMergedCssFileName();
     }
 
+    /**
+     * Returns path to file with merged JS scripts
+     * @param bool $mode If true returns  path with webRoot config param( by default webRoot: $this->app["request"]->server->get("CONTEXT_DOCUMENT_ROOT")
+     * @return type
+     */
     private function getMergedJsFilePath($mode = false) {
         return $this->config->getMergedJsRootDir($mode) . $this->config->getJsFilesHash() . "/" . $this->config->getMergedJsFileName();
     }

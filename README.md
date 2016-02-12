@@ -36,6 +36,7 @@ name|default|description
 active|true|If set to false getScripts() returns HTML code with unmerged files  
 alwaysReMerge|false|If set to true on every call getScripts() recreate merged files (useful when you modify scripts and styles)
 fetchRemote|true|If set to true remote files will be downloaded and merged
+flushMerged|false|If set to true method "flushMerged" (Delete all dirs, containing merged JS and CSS files, in configured CssRootDir and JsRootDir) will be called  before any action.
 mergedCssRootDir|"/assets/merged/"|Dir where to store merged CSS files. At this dir will be created subdir with name "hash_of_names_files_to_merge" with merged file. Relative to front controller dir.
 mergedJsRootDir|"/assets/merged/"|Dir where to store merged JS files. At this dir will be created subdir with name "hash_of_names_files_to_merge" with merged file. Relative to front controller dir.
 webRoot|result of: $app["request"]->server->get("CONTEXT_DOCUMENT_ROOT")|Used for build absolute filepaths

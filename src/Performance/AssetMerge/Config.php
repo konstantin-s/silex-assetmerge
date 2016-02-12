@@ -19,12 +19,14 @@ class Config {
     protected $mergedCssFileName = "styles.css";
     protected $mergedJsFileName = "js.js";
     protected $webRoot;
+    protected $flushMerged;
 
     function __construct(Application $app) {
         $this->app = $app;
         $config = array(
             "active" => true,
             "alwaysReMerge" => false,
+            "flushMerged" => false,
             "fetchRemote" => true,
             "mergedCssRootDir" => "/assets/merged/",
             "mergedJsRootDir" => "/assets/merged/",
@@ -38,9 +40,18 @@ class Config {
         $this->setWebRoot($config["webRoot"]);
         $this->setActive($config["active"]);
         $this->setalwaysReMerge($config["alwaysReMerge"]);
+        $this->setFlushMerged($config["flushMerged"]);
         $this->setfetchRemote($config["fetchRemote"]);
         $this->setMergedCssRootDir($config["mergedCssRootDir"]);
         $this->setMergedJsRootDir($config["mergedJsRootDir"]);
+    }
+
+    function getFlushMerged() {
+        return $this->flushMerged;
+    }
+
+    function setFlushMerged($flushMerged) {
+        $this->flushMerged = $flushMerged;
     }
 
     public function getWebRoot() {
