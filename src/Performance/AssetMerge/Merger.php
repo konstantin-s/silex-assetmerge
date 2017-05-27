@@ -19,11 +19,50 @@ class Merger {
     protected $config;
 
     function __construct(Application $app) {
-        $this->app = $app;
+        $this->app    = $app;
         $this->config = $app['assetmerge_config'];
         if ($this->config->getFlushMerged()) {
             $this->flushMerged();
         }
+    }
+
+    /**
+     * Merge if needed and return html for head
+     * @return string <link href="path_to_merged
+     */
+    public function getCssOnly() {
+        if ($this->config->getAlwaysReMerge() == true || !file_exists($this->getMergedCssFilePath('full'))) {
+            $MergedCssRules          = $this->createMergedCssRules();
+            $MergedCssRules_filtered = $this->filterCssRules($MergedCssRules);
+            $this->saveMergedCssRules($MergedCssRules_filtered);
+        }
+
+        $cssCode = "";
+        if (file_exists($this->getMergedCssFilePath('full'))) {
+            $cssCode .= '<link href="' . $this->getMergedCssFilePath() . '" rel="stylesheet" type="text/css"/>';
+        }
+
+        return $cssCode;
+    }
+
+    /**
+     * Merge if needed and return html for head
+     * @return string '<script src="path_to_merged
+     */
+    public function getJSOnly() {
+
+        if ($this->config->getAlwaysReMerge() == true || !file_exists($this->getMergedJsFilePath('full'))) {
+            $MergedJsCode          = $this->createMergedJsCode();
+            $MergedJsCode_filtered = $this->filterJsCode($MergedJsCode);
+            $this->saveMergedJsCode($MergedJsCode_filtered);
+        }
+
+        $cssCode = '';
+        if (file_exists($this->getMergedJsFilePath('full'))) {
+            $cssCode .= '<script src="' . $this->getMergedJsFilePath() . '" type="text/javascript"></script>';
+        }
+
+        return $cssCode;
     }
 
     /**
@@ -45,11 +84,11 @@ class Merger {
         }
 
         if ($this->config->getAlwaysReMerge() == true || !$this->isMergedFilesExists()) {
-            $MergedCssRules = $this->createMergedCssRules();
+            $MergedCssRules          = $this->createMergedCssRules();
             $MergedCssRules_filtered = $this->filterCssRules($MergedCssRules);
             $this->saveMergedCssRules($MergedCssRules_filtered);
 
-            $MergedJsCode = $this->createMergedJsCode();
+            $MergedJsCode          = $this->createMergedJsCode();
             $MergedJsCode_filtered = $this->filterJsCode($MergedJsCode);
             $this->saveMergedJsCode($MergedJsCode_filtered);
         }
@@ -120,7 +159,7 @@ class Merger {
      */
     private function getDirsToFlush($dirToIterate) {
         $toDeleteDirs = array();
-        $dir = new \DirectoryIterator($dirToIterate);
+        $dir          = new \DirectoryIterator($dirToIterate);
         foreach ($dir as $fileinfo) {
             if (!$fileinfo->isDir() || $fileinfo->isDot() || $fileinfo->getFilename() == "fonts") {
                 continue;
@@ -170,6 +209,9 @@ class Merger {
     private function createMergedJsCode() {
         $merged_js = "";
         foreach ($this->config->getJsFiles() as $js_file) {
+            if (empty($js_file)) {
+                continue;
+            }
 
             if (filter_var($js_file, FILTER_VALIDATE_URL) && pathinfo($js_file, PATHINFO_EXTENSION) == "js" && $this->config->getFetchRemote() == true) {
                 $fileContents = file_get_contents($js_file);
