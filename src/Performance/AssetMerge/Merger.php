@@ -46,10 +46,12 @@ class Merger {
     }
 
     /**
+     * 
+     * @param bool $async Add async attribute
      * Merge if needed and return html for head
      * @return string '<script src="path_to_merged
      */
-    public function getJSOnly() {
+    public function getJSOnly($async = false) {
 
         if ($this->config->getAlwaysReMerge() == true || !file_exists($this->getMergedJsFilePath('full'))) {
             $MergedJsCode          = $this->createMergedJsCode();
@@ -59,7 +61,7 @@ class Merger {
 
         $cssCode = '';
         if (file_exists($this->getMergedJsFilePath('full'))) {
-            $cssCode .= '<script src="' . $this->getMergedJsFilePath() . '" type="text/javascript"></script>';
+            $cssCode .= '<script ' . ($async ? ' async ' : '' ) . 'src="' . $this->getMergedJsFilePath() . '" type="text/javascript"></script>';
         }
 
         return $cssCode;
